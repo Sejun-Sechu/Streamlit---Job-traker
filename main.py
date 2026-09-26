@@ -4,6 +4,7 @@ from pathlib import Path
 
 st.markdown("# Spring Week Job Tracker", text_alignment="center")
 
+csv_path = Path("applications.csv")
 
 
 company = st.text_input("Company name")
@@ -36,8 +37,6 @@ if add_clicked:
             "status": status
             }
 
-        csv_path = Path("applications.csv")
-
         file_is_empty = (
             not csv_path.exists()
             or csv_path.stat().st_size == 0
@@ -54,9 +53,32 @@ if add_clicked:
 
             writer.writerow(job_application)
         
-        
         st.success("The application successfully added.")
-        
 
 
-         
+
+load_applications = []
+
+if csv_path.exists() and csv_path.stat().st_size > 0:
+    with csv_path.open("r", newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        load_applications = list(reader)
+
+st.subheader("Your Applications")
+
+if load_applications:
+     st.dataframe(
+        load_applications,
+        width="stretch",
+        hide_index=True
+     )
+else:
+     st.info("No applications saved yet.")
+
+
+company_options = []
+
+for application in load_applications:
+     company_options.append(application["company"])
+
+st.write(company_options)
