@@ -1,4 +1,6 @@
 import streamlit as st
+import csv
+from pathlib import Path
 
 st.markdown("# Spring Week Job Tracker", text_alignment="center")
 
@@ -25,16 +27,36 @@ if add_clicked:
     elif status == "None":
             st.error("Status is required.")
     else:
+
+        job_application = {
+            "company": company.strip(),
+            "role": role.strip(),
+            "link": link.strip(),
+            "deadline": deadline.isoformat(),
+            "status": status
+            }
+
+        csv_path = Path("applications.csv")
+
+        file_is_empty = (
+            not csv_path.exists()
+            or csv_path.stat().st_size == 0
+            )
+
+        with csv_path.open("a", newline="", encoding="utf-8",) as file:
+            writer = csv.DictWriter(
+                file,
+                fieldnames=job_application.keys()
+                )
+
+            if file_is_empty:
+                writer.writeheader()
+
+            writer.writerow(job_application)
+        
+        
         st.success("The application successfully added.")
+        
 
 
-job_application = {
-    "company": company.strip(),
-    "role": role.strip(),
-    "link": link.strip(),
-    "deadline": deadline.isoformat(),
-    "status": status
-}
-
-st.write(job_application)
          
