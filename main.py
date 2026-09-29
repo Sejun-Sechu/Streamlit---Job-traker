@@ -1,19 +1,29 @@
 import streamlit as st
 import csv
 from pathlib import Path
+from datetime import date
 
 st.markdown("# Spring Week Job Tracker", text_alignment="center")
 
+
 csv_path = Path("applications.csv")
 
+if st.session_state.pop("clear_inputs", False):
+    st.session_state["company"] = ""
+    st.session_state["role"] = ""
+    st.session_state["link"] = ""
+    st.session_state["deadline"] = date.today()
+    st.session_state["status"] = "None"
 
-company = st.text_input("Company name")
-role = st.text_input("Role")
-link = st.text_input("URL")
-deadline = st.date_input("Deadline")
+
+company = st.text_input("Company name", key="company")
+role = st.text_input("Role", key="role")
+link = st.text_input("URL", key="link")
+deadline = st.date_input("Deadline", key="deadline")
 status = st.selectbox(
     "Status",
-    ["None" ,"Interested", "Applied", "Online Assessment", "Interview", "Rejected", "Offer"]
+    ["None" ,"Interested", "Applied", "Online Assessment", "Interview", "Rejected", "Offer"],
+    key="status"
 )
 
 add_clicked = st.button("Add application")
@@ -55,6 +65,12 @@ if add_clicked:
         
         st.success("The application successfully added.")
 
+        st.session_state["clear_inputs"] = True
+        st.rerun()
+
+
+        
+
 
 
 load_applications = []
@@ -79,6 +95,41 @@ else:
 company_options = []
 
 for application in load_applications:
-     company_options.append(application["company"])
+     company_options.append(application["company"] +
+                            " - " + application["role"]
+                            )
 
-st.write(company_options)
+
+selected_company = st.selectbox(
+     "Delete",
+    ["None"] + company_options
+)
+
+
+
+if selected_company != "None":
+    delete_clicked = st.button(f"Are you sure to delete {selected_company} ?")
+
+    if delete_clicked:
+        remaining_applications = []
+
+        selected_index = company_options.index(selected_company)
+        load_applications.pop(selected_index)
+
+        with csv_path.open("w", newline="", encoding="utf-8") as file:
+             writer = csv.DictWriter(
+                  file,
+                  fieldnames=["company", "role", "link", "deadline", "status"]
+             )
+
+             writer.writeheader()
+             writer.writerows(load_applications)
+
+        st.session_state["success_message"] = (
+            f"{selected_company} was deleted."
+        )
+
+
+        st.rerun()
+     
+
